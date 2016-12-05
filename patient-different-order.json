@@ -1,0 +1,95 @@
+{
+    "identifier" : [ {
+      "period" : {
+        "start" : "2001-05-06"
+      },
+      "system" : "urn:oid:1.2.36.146.595.217.0.1",
+      "use" : "usual",
+      "assigner" : {
+        "display" : "Acme Healthcare"
+      },
+      "type" : {
+        "coding" : [ {
+          "system" : "http://hl7.org/fhir/v2/0203",
+          "code" : "MR"
+        } ]
+      },
+      "value" : "12345"
+    } ],
+    "extension" : [ {
+      "valueid" : "5e5810e7-c2da-4a9a-8573-e657baa78760",
+      "url" : "www.ehealthontario.on.ca/fhir/eConsult/primaryKey"
+    } ],
+    "address" : [ {
+      "period" : {
+        "start" : "1974-12-25"
+      },
+      "city" : "PleasantVille",
+      "use" : "home",
+      "line" : [ "534 Erewhon St" ],
+      "postalCode" : "3999",
+      "district" : "Rainbow",
+      "state" : "Vic",
+      "type" : "both"
+    } ],
+    "gender" : "male",
+    "active" : true,
+    "birthDate" : "1974-12-25",
+    "_birthDate" : {
+      "extension" : [ {
+        "valueDateTime" : "1974-12-25T14:35:45-05:00",
+        "url" : "http://hl7.org/fhir/StructureDefinition/patient-birthTime"
+      } ]
+    },
+    "deceasedBoolean" : false,
+    "managingOrganization" : {
+      "reference" : "Organization/1"
+    },
+    "contact" : [ {
+      "period" : {
+        "start" : "2012"
+      },
+      "gender" : "female",
+      "name" : {
+        "given" : [ "Bénédicte" ],
+        "_family" : [ {
+          "extension" : [ {
+            "valueCode" : "VV",
+            "url" : "http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier"
+          } ]
+        }, null ],
+        "family" : [ "du", "Marché" ]
+      },
+      "telecom" : [ {
+        "system" : "phone",
+        "value" : "+33 (237) 998327"
+      } ],
+      "relationship" : [ {
+        "coding" : [ {
+          "system" : "http://hl7.org/fhir/patient-contact-relationship",
+          "code" : "partner"
+        } ]
+      } ]
+    } ],
+    "name" : [ {
+      "given" : [ "Peter", "James" ],
+      "use" : "official",
+      "family" : [ "Chalmers" ]
+    }, {
+      "given" : [ "Jim" ],
+      "use" : "usual"
+    } ],
+    "telecom" : [ {
+      "use" : "home"
+    }, {
+      "system" : "phone",
+      "use" : "work",
+      "value" : "(03) 5555 6473"
+    } ],
+    "id" : "example",
+    "text" : {
+      "div" : "<div>\n      \n      <table>\n        \n        <tbody>\n          \n          <tr>\n            \n            <td>Name</td>\n            \n            <td>Peter James \n              <b>Chalmers</b> (&quot;Jim&quot;)\n            </td>\n          \n          </tr>\n          \n          <tr>\n            \n            <td>Address</td>\n            \n            <td>534 Erewhon, Pleasantville, Vic, 3999</td>\n          \n          </tr>\n          \n          <tr>\n            \n            <td>Contacts</td>\n            \n            <td>Home: unknown. Work: (03) 5555 6473</td>\n          \n          </tr>\n          \n          <tr>\n            \n            <td>Id</td>\n            \n            <td>MRN: 12345 (Acme Healthcare)</td>\n          \n          </tr>\n        \n        </tbody>\n      \n      </table>    \n    \n    </div>",
+      "status" : "generated"
+    },
+    "resourceType" : "Patient"
+  }

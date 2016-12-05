@@ -1,0 +1,13 @@
+com\eho\dynamodb\Configuration.class
+com\eho\fhir\econsult\RestControllers\ReferralRequestController.class
+test\dynamotest\dynamotest.class
+com\eho\fhir\resources\Ontario_Patient.class
+com\eho\fhir\econsult\App.class
+com\eho\fhir\econsult\RestControllers\ConditionController.class
+com\eho\fhir\econsult\RestControllers\DocumentController.class
+com\eho\dynamodb\DynamoDBConnection.class
+com\eho\fhir\econsult\RestControllers\CompositionController.class
+test\dynamotest\FHIR_TEST.class
+com\eho\fhir\econsult\RestControllers\ObservationController.class
+com\eho\fhir\econsult\RestControllers\PatientController.class
+com\eho\fhir\econsult\RestControllers\PractitionerController.class
