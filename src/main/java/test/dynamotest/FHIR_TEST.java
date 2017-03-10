@@ -85,9 +85,6 @@ public class FHIR_TEST {
         String pat = new String(Files.readAllBytes(Paths.get("C:\\Users\\borna.jafarpour\\Documents\\NetBeansProjects\\eConsult-FHIR\\eho-fhir-econsult\\src\\main\\java\\test\\dynamotest\\patient.json")));
         Patient newPatient = DynamoDBConnection.fCtx.newJsonParser().parseResource(Patient.class, pat);
         System.out.println(DynamoDBConnection.fCtx.newXmlParser().encodeResourceToString(newPatient));
-        
-        
-        
 //
 //        JSONObject ret = new JSONObject();
 //        ret.put("meta", new JSONObject().put("profile", new JSONArray(new String[]{"http://ehealthontario.ca/API/FHIR/StructureDefinition/pcr-parameters-pixm-out|1.0"})));

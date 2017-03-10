@@ -6,4 +6,3 @@ com\eho\dynamodb\DynamoDBConnection.class
 test\dynamotest\FHIR_TEST.class
 com\eho\fhir\econsult\App.class
 com\eho\fhir\econsult\RestControllers\PatientController.class
-com\eho\fhir\econsult\RestControllers\PractitionerController.class

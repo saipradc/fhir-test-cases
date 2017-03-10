@@ -76,6 +76,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>fhir.validation.group</groupId>
+            <artifactId>fhir.validation.artifact</artifactId>
+            <version>1</version>
+        </dependency>
     </dependencies>
   <build>
         <plugins>
