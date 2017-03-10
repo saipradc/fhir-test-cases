@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @author borna.jafarpour
  */
 @RestController
-@RequestMapping(value="/practitioner")
+@RequestMapping(value="/Practitioner")
 
 public class PractitionerController {
     
@@ -85,6 +85,7 @@ public class PractitionerController {
     }    
       @RequestMapping(value="/{id}", method=RequestMethod.GET, produces = "text/plain;charset=UTF-8")
     public ResponseEntity<String> practitionerGET(@PathVariable String id) throws Exception{
+          System.out.println("iddddd------------> " + id);
         Item item = DynamoDBConnection.get_item_by_ID(id);
         if (item == null)
             return new ResponseEntity(HttpStatus.NOT_FOUND);
@@ -105,17 +106,17 @@ public class PractitionerController {
         }
     }
       
-    @RequestMapping(value="/{id}",method = RequestMethod.PUT, produces = "text/plain;charset=UTF-8")
-    public @ResponseBody ResponseEntity<String> practitioner_put( @RequestBody final  String practitioner_resource_string,@PathVariable String id) throws Exception
-    { 
-        String to_return;
-        try {
-            Practitioner newPatient = DynamoDBConnection.fCtx.newJsonParser().parseResource(Practitioner.class, practitioner_resource_string);//check if it is properly
-            to_return = DynamoDBConnection.upload_resource(newPatient,id);    
-        } catch (Exception e) {
-            return new ResponseEntity(e.getMessage(),HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity(to_return,HttpStatus.OK);
-    } 
+//    @RequestMapping(value="/{id}",method = RequestMethod.PUT, produces = "text/plain;charset=UTF-8")
+//    public @ResponseBody ResponseEntity<String> practitioner_put( @RequestBody final  String practitioner_resource_string,@PathVariable String id) throws Exception
+//    { 
+//        String to_return;
+//        try {
+//            Practitioner newPatient = DynamoDBConnection.fCtx.newJsonParser().parseResource(Practitioner.class, practitioner_resource_string);//check if it is properly
+//            to_return = DynamoDBConnection.upload_resource(newPatient,id);    
+//        } catch (Exception e) {
+//            return new ResponseEntity(e.getMessage(),HttpStatus.BAD_REQUEST);
+//        }
+//        return new ResponseEntity(to_return,HttpStatus.OK);
+//    } 
     
 }

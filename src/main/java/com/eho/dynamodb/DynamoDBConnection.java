@@ -38,29 +38,69 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.hl7.fhir.instance.validation.InstanceValidator;
+import org.json.JSONArray;
 
 /**
  *
  * @author borna.jafarpour
  */
 public class DynamoDBConnection {
-    public static FhirContext fCtx = FhirContext.forDstu2Hl7Org();
+    public static FhirContext fCtx = FhirContext.forDstu2();
     public static final String PATIENT_TABLE = "eConsult";
     public static final String PRIMARY_KEY = "dynamodb-id";
-    public static final String PRIMARY_KEY_URL = "www.ehealthontario.on.ca/fhir/eConsult/primaryKey";
+    //public static final String PRIMARY_KEY_URL = "www.ehealthontario.on.ca/fhir/eConsult/primaryKey";
     public static final String JSON_TEXT_URL = "www.ehealthontario.on.ca/fhir/eConsult/jsontext";
 
-    public static final String PROXY_IP = "10.61.128.178";
+    public static final String PROXY_IP = "10.61.128.178"; //former proxy. not used
     public static final int PROXY_PORT = 8080;
+    public static final boolean USE_PROXY = false;
+    
     
     private static final AmazonDynamoDBClient dynamoDBClient;
+    public static String create_search_exp(String criteria_values,String criteria_name ,Map<String, AttributeValue> expressionAttributeValues)
+    {
+        
+        String filter_expression  = "";
+        boolean previous_expression = false;
+        if (!expressionAttributeValues.isEmpty())
+            previous_expression = true;
+
+        if (criteria_values!=null) 
+        {
+            if (criteria_values.contains(","))
+            {
+                String [] identifiers = criteria_values.split(",");
+                for (int i = 0 ; i < identifiers.length;i++)
+                {
+                    expressionAttributeValues.put(":this"+criteria_name+i, new AttributeValue().withS(identifiers[i].toLowerCase()));
+                    if (i > 0)
+                        filter_expression+= " OR ";                        
+                    filter_expression+= "contains(" +criteria_name+  ", :this"+criteria_name+i+ ")";
+                }
+            }else       
+            {
+                    expressionAttributeValues.put(":this"+criteria_name, new AttributeValue().withS(criteria_values.toLowerCase()));
+                    filter_expression += "contains("+criteria_name+" , :this"+criteria_name+")";
+            }
+            filter_expression = "(" + filter_expression + ")";
+            if (previous_expression)
+                filter_expression = " AND " + filter_expression;
+        }
+        return filter_expression;
+    }
+
     static{
+        
         ClientConfiguration cc = new ClientConfiguration();
-        cc.setProxyHost(DynamoDBConnection.PROXY_IP);
-        cc.setProxyPort(DynamoDBConnection.PROXY_PORT);
-         dynamoDBClient = new AmazonDynamoDBClient(cc);
+        if (USE_PROXY)
+        {
+            cc.setProxyHost(DynamoDBConnection.PROXY_IP);
+            cc.setProxyPort(DynamoDBConnection.PROXY_PORT);
+        }
+        dynamoDBClient = new AmazonDynamoDBClient(cc);
     }
     public static AmazonDynamoDBClient getDynamoDBClient()
     {
@@ -104,42 +144,47 @@ public class DynamoDBConnection {
                 .withReturnValues(ReturnValue.NONE);
         return table.putItem(putItemSpec);
     }
-    private static String add_uuid(BaseResource resource)//returns existing primary key is it already exists
+    private static String generate_uuid()
     {
-        return add_primary_as_extension(resource, UUID.randomUUID().toString());
+        return UUID.randomUUID().toString();
     }
-    private static String add_primary_as_extension(BaseResource resource, String uuid)//returns existing primary key is it already exists
-    {
-        ExtensionDt ext = new ExtensionDt();
-        ext.setModifier(false);
-        ext.setUrl(DynamoDBConnection.PRIMARY_KEY_URL);
-        ext.setValue(new StringDt(uuid));
-        resource.addUndeclaredExtension(ext);            
-        return uuid;
-    }
-    private static void add_string_as_extension(BaseResource resource, String text)//returns existing primary key is it already exists
-    {
-        ExtensionDt ext = new ExtensionDt();
-        ext.setModifier(false);
-        ext.setUrl(JSON_TEXT_URL);
-        ext.setValue(new IdDt(text));
-        resource.addUndeclaredExtension(ext);            
-    }
+//    private static String add_uuid(BaseResource resource)//returns existing primary key is it already exists
+//    {
+//        return add_primary_as_extension( UUID.randomUUID().toString());
+//    }
+//    private static String add_primary_as_extension(String uuid)//returns existing primary key is it already exists
+//    {
+//        ExtensionDt ext = new ExtensionDt();
+//        ext.setModifier(false);
+//        ext.setUrl(DynamoDBConnection.PRIMARY_KEY_URL);
+//        ext.setValue(new StringDt(uuid));
+//        //resource.addUndeclaredExtension(ext);            
+//        return uuid;
+//    }
+//    private static void add_string_as_extension(BaseResource resource, String text)//returns existing primary key is it already exists
+//    {
+//        ExtensionDt ext = new ExtensionDt();
+//        ext.setModifier(false);
+//        ext.setUrl(JSON_TEXT_URL);
+//        ext.setValue(new IdDt(text));
+//        resource.addUndeclaredExtension(ext);            
+//    }
 
     
     public static String upload_resource( BaseResource  resource ) throws Exception
     {
-        String primary_key = add_uuid(resource);
-        return upload_resource(resource,primary_key);
+        String primary_key = generate_uuid();
+        resource.setId(primary_key);
+        return primary_key;
     }
-    public static String upload_resource( BaseResource  resource, String primary_key /* if no primary key in case of post, send null*/ ) throws Exception
+    public static void upload_resource( BaseResource  resource, String id /* if no primary key in case of post, send null*/ ) throws Exception
     {
-        String id = add_primary_as_extension(resource,primary_key);
+        //String id = add_primary_as_extension(primary_key);
         String resource_string = DynamoDBConnection.fCtx.newJsonParser().setPrettyPrint(true).encodeResourceToString(resource);;
         DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
         Table table = dynamoDB.getTable(PATIENT_TABLE);
         
-        //lets retreive based on the key. if key invalid (not assigned yet) nullis returned.
+        //lets retreive based on the key. if key invalid (not assigned yet) null is returned.
         Item retreived_item = table.getItem(PRIMARY_KEY,id);
         if (retreived_item == null)//if null instantiate it
         {
@@ -151,16 +196,60 @@ public class DynamoDBConnection {
         Integer new_version = retreived_item.getInt("version") + 1;        
         retreived_item.withInt("version", new_version);
         
-        
-                
         Item item_to_upload = retreived_item//Item.fromJSON(retreived_item.toJSONPretty())
                 .withString("text" +new_version.toString() , resource_string)
                 .withMap("json-document", new ObjectMapper().readValue(resource_string, LinkedHashMap.class));
+        
+        if (resource.getResourceName().equals("Patient"))
+        {
+            HashSet<String> ids  = get_patient_identifiers(resource_string);
+            item_to_upload.withStringSet("identifiers", ids);
+            HashSet<String> givens  = get_patient_name(resource_string,"given");
+            item_to_upload.withStringSet("givens", givens);
+            HashSet<String> families  = get_patient_name(resource_string,"family");
+            item_to_upload.withStringSet("families", families);
+        }
+        
         PutItemSpec putItemSpec = new PutItemSpec()
                 .withItem(item_to_upload);
         table.putItem(putItemSpec);
-        return id;
     }
+    
+   private static HashSet<String> get_patient_name(String patient,String nameType)
+    {
+        org.json.JSONObject p= new org.json.JSONObject(patient);
+        JSONArray names = p.optJSONArray("name");
+        HashSet<String> arr = new HashSet<>();
+        if (names!=null)
+        {
+            for (int k = 0 ; k < names.length() ; k++)
+            {
+                JSONArray givens = names.getJSONObject(k).optJSONArray(nameType);
+                if (givens!=null)
+                    for (int i = 0 ; i < givens.length();i++)
+                        arr.add(givens.getString(i).toLowerCase());
+            }
+        }
+        return arr;
+            
+    }        
+    public static HashSet<String> get_patient_identifiers(String patient){
+        org.json.JSONObject p= new org.json.JSONObject(patient);
+        JSONArray ids = p.optJSONArray("identifier");
+        HashSet<String> idsarr = new HashSet<String>();
+        
+        if (ids!=null)
+        {
+            for (int i = 0 ; i < ids.length() ; i++)
+            {
+                org.json.JSONObject identifier = ids.getJSONObject(i);
+                String value = identifier.optString("value");
+                String system = identifier.optString("system");
+                idsarr.add(system + "|" + value);
+            }
+        }
+        return idsarr;
+    }    
     
     
     public static ItemCollection<QueryOutcome> query_dynamodb(QuerySpec spec )
@@ -202,8 +291,8 @@ public class DynamoDBConnection {
          scanRequest.withExpressionAttributeNames(expression_names)
                     .withExpressionAttributeValues(expression_values)
                     .withFilterExpression(filter_expression);
+         System.out.println("Filter Expression ->" + filter_expression);
         return dynamoDBClient.scan(scanRequest);
-                
     }
 
     
@@ -243,36 +332,36 @@ public class DynamoDBConnection {
     }
     
 
-    private static int create_new_version_numbe_old(Item item) throws Exception
-    {
-        JSONObject json_resource = new JSONObject(item.toJSONPretty());
-        Iterator<String> itr= json_resource.keys();
-        int max_version = Integer.MIN_VALUE;
-        while (itr.hasNext())
-        {
-            String nextString = itr.next();
-            
-            if (nextString.matches("[0-9]+"))//if a ltter does not exist in the key.this means it is a version of the rseource
-            {
-                int thisValue = Integer.valueOf(nextString);
-                if (thisValue > max_version)
-                    max_version= thisValue;
-            }
-        }
-        
-        if (max_version == Integer.MIN_VALUE)
-            return 0;
-        else
-            return ++max_version;
-    }    
-    public static String get_extension(BaseResource br, String url)
-    {
-        List<ExtensionDt> resourceExts = br.getUndeclaredExtensionsByUrl(url);
-        if (!resourceExts.isEmpty())
-            return resourceExts.get(0).getValue().toString();
-        else
-            return null;
-    }
+//    private static int create_new_version_numbe_old(Item item) throws Exception
+//    {
+//        JSONObject json_resource = new JSONObject(item.toJSONPretty());
+//        Iterator<String> itr= json_resource.keys();
+//        int max_version = Integer.MIN_VALUE;
+//        while (itr.hasNext())
+//        {
+//            String nextString = itr.next();
+//            
+//            if (nextString.matches("[0-9]+"))//if a ltter does not exist in the key.this means it is a version of the rseource
+//            {
+//                int thisValue = Integer.valueOf(nextString);
+//                if (thisValue > max_version)
+//                    max_version= thisValue;
+//            }
+//        }
+//        
+//        if (max_version == Integer.MIN_VALUE)
+//            return 0;
+//        else
+//            return ++max_version;
+//    }    
+//    public static String get_extension(BaseResource br, String url)
+//    {
+//        List<ExtensionDt> resourceExts = br.getUndeclaredExtensionsByUrl(url);
+//        if (!resourceExts.isEmpty())
+//            return resourceExts.get(0).getValue().toString();
+//        else
+//            return null;
+//    }
     
     
     

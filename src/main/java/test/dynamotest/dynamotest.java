@@ -34,7 +34,7 @@ import java.util.Scanner;
  * @author borna.jafarpour
  */
 public class dynamotest {
-    public static void main2(String[] args) throws Exception
+    public static void main(String[] args) throws Exception
     {
          /*String file="patient-test.json";
          JSONObject patient =   new JSONObject(readFile(file));
@@ -46,9 +46,7 @@ public class dynamotest {
 //         System.out.println("----> " + DynamoDBConenction.update_resource(patient.toString()).getUpdateItemResult());
          //DynamoDBConenction.upload_resource(patient.toString());
          
-//         Item anitem = new Item();
-//         anitem.withInt("salaam", 0);
-//         anitem.getInt("salam");
+
         /*JSONObject jo = new JSONObject(patient3);
         Map<String,Object> result = new ObjectMapper().readValue(jo.toString(), LinkedHashMap.class);
         Item i = new Item();
@@ -58,22 +56,48 @@ public class dynamotest {
         System.out.println(i.toJSONPretty());*/
         
         //test_dynamo_db_search();
-        test_dynamo_db_query();
+        test_dynamo_db_query2();
     }
-    public static void test_dynamo_db_query()
+    
+    public static void test_dynamo_db_query2()
     {
         AmazonDynamoDB client = DynamoDBConnection.getDynamoDBClient();
 
         Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
         Map<String, String> expressionAttributeNames = new HashMap<>();
 
-        expressionAttributeValues.put(":given", new AttributeValue().withS("kazem"));
+        expressionAttributeValues.put(":thisid", new AttributeValue().withS("urn:oid:2.16.840.1.113883.19.5|12345"));
+
+        ScanRequest scanRequest = new ScanRequest()
+            .withTableName(DynamoDBConnection.PATIENT_TABLE)
+            .withFilterExpression("(contains(identifiers , :thisid))")
+            //.withExpressionAttributeNames(expressionAttributeNames)
+            .withExpressionAttributeValues(expressionAttributeValues);
+        
+        ScanResult result = client.scan(scanRequest);
+        System.out.println("Count --> "  +result.getCount());
+        for (Map<String, AttributeValue> item : result.getItems()) {
+            System.out.println(item.toString());
+        }
+
+    }   
+    
+
+    
+    public static void test_dynamo_db_query3()
+    {
+        AmazonDynamoDB client = DynamoDBConnection.getDynamoDBClient();
+
+        Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+        Map<String, String> expressionAttributeNames = new HashMap<>();
+
+        expressionAttributeValues.put(":given", new AttributeValue().withS("Henry"));
         expressionAttributeNames.put("#name","name")  ; 
         expressionAttributeNames.put("#jsondocument", "json-document");
 
         ScanRequest scanRequest = new ScanRequest()
             .withTableName(DynamoDBConnection.PATIENT_TABLE)
-            .withFilterExpression("(#jsondocument.#name[0].given[0] = :given) AND (#jsondocument.#name[0].given[0] = :given)")
+            .withFilterExpression("(#jsondocument.#name[0].given[0] = :given) ")
                 .withExpressionAttributeNames(expressionAttributeNames)
             .withExpressionAttributeValues(expressionAttributeValues);
         

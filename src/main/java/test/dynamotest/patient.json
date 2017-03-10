@@ -1,7 +1,4 @@
 {
-  "managingOrganization": {
-    "reference": "Organization/1"
-  },
   "resourceType": "Patient",
   "id": "example",
   "text": {
@@ -30,7 +27,11 @@
       "assigner": {
         "display": "Acme Healthcare"
       }
-    }
+    },
+    {
+      "system": "www.xyz.com",
+      "value": "abc"
+    }    
   ],
   "active": true,
   "name": [
@@ -114,7 +115,7 @@
       "name": {
         "family": [
           "du",
-          "Marché"
+          "MarchÃ©"
         ],
         "_family": [
           {
@@ -131,7 +132,7 @@
           null
         ],
         "given": [
-          "Bénédicte"
+          "BÃ©nÃ©dicte"
         ]
       },
       "telecom": [
@@ -150,6 +151,8 @@
         }
       }
     }
-  ]
-
+  ],
+  "managingOrganization": {
+    "reference": "Organization/1"
+  }
 }

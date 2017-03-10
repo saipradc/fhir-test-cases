@@ -7,15 +7,23 @@ package test.dynamotest;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.model.api.ExtensionDt;
+import ca.uhn.fhir.model.api.IDatatype;
+import ca.uhn.fhir.model.api.ResourceMetadataKeyEnum;
+import ca.uhn.fhir.model.base.resource.ResourceMetadataMap;
+import ca.uhn.fhir.model.dstu2.composite.AddressDt;
 import ca.uhn.fhir.model.dstu2.composite.HumanNameDt;
 import ca.uhn.fhir.model.dstu2.composite.IdentifierDt;
 import ca.uhn.fhir.model.dstu2.resource.Observation;
+import ca.uhn.fhir.model.dstu2.resource.Parameters;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.resource.Practitioner;
 import ca.uhn.fhir.model.dstu2.valueset.IdentifierUseEnum;
+import ca.uhn.fhir.model.primitive.BooleanDt;
 import ca.uhn.fhir.model.primitive.DateTimeDt;
 import ca.uhn.fhir.model.primitive.IdDt;
+import ca.uhn.fhir.model.primitive.IntegerDt;
 import ca.uhn.fhir.model.primitive.OidDt;
+import ca.uhn.fhir.model.primitive.PositiveIntDt;
 import ca.uhn.fhir.model.primitive.StringDt;
 import ca.uhn.fhir.model.primitive.UriDt;
 import ca.uhn.fhir.narrative.DefaultThymeleafNarrativeGenerator;
@@ -23,34 +31,127 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.util.json.JSONObject;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.eho.dynamodb.DynamoDBConnection;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import javax.json.JsonObject;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.CharSet;
 import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
+import org.hl7.fhir.instance.model.BooleanType;
+import org.hl7.fhir.instance.model.Identifier;
 import org.hl7.fhir.instance.model.api.IBaseDatatype;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
  * @author borna.jafarpour
  */
 public class FHIR_TEST {
+   private static HashSet<String> get_patient_name(String patient,String nameType)
+    {
+        org.json.JSONObject p= new org.json.JSONObject(patient);
+        JSONArray names = p.optJSONArray("name");
+        HashSet<String> arr = new HashSet<String>();
+        if (names!=null)
+        {
+            for (int k = 0 ; k < names.length() ; k++)
+            {
+                JSONArray givens = names.getJSONObject(k).optJSONArray(nameType);
+                if (givens!=null)
+                    for (int i = 0 ; i < givens.length();i++)
+                    {
+                        arr.add(givens.getString(i));
+                    }
+            }
+        }
+        return arr;
+            
+    }    
     public static void main(String[] args) throws Exception
     {
+        String pat = new String(Files.readAllBytes(Paths.get("C:\\Users\\borna.jafarpour\\Documents\\NetBeansProjects\\eConsult-FHIR\\eho-fhir-econsult\\src\\main\\java\\test\\dynamotest\\patient.json")));
+        Patient newPatient = DynamoDBConnection.fCtx.newJsonParser().parseResource(Patient.class, pat);
+        System.out.println(DynamoDBConnection.fCtx.newXmlParser().encodeResourceToString(newPatient));
         
         
-        ExtensionDt ext = new ExtensionDt();
-        ext.setModifier(false);
-        ext.setUrl(":* ;+");
-        //ext.setValue(new IdDt("123456789"));
-        ext.setValue(new StringDt(":* ;+"));
-        Patient p  = new Patient();
-        UriDt u = new IdDt(":* ;+");
+        
+//
+//        JSONObject ret = new JSONObject();
+//        ret.put("meta", new JSONObject().put("profile", new JSONArray(new String[]{"http://ehealthontario.ca/API/FHIR/StructureDefinition/pcr-parameters-pixm-out|1.0"})));
+//
+//        System.out.println("----------->"+ret.toString());
+        
+//        Parameters pm = new Parameters();
+//        ResourceMetadataMap rmm  = new ResourceMetadataMap();//.put(ResourceMetadataKeyEnum.PROFILES,"salaam" );
+//        rmm.put(ResourceMetadataKeyEnum.PROFILES, new IdDt("http://ehealthontario.ca/API/FHIR/StructureDefinition/pcr-parameters-pixm-out|1.0"));
+//        pm.setResourceMetadata(rmm);
+//        System.out.println(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(pm));
+//        
+        
+
+        
+//        String pat = new String(Files.readAllBytes(Paths.get("C:\\Users\\borna.jafarpour\\Documents\\NetBeansProjects\\eConsult-FHIR\\eho-fhir-econsult\\src\\main\\java\\test\\dynamotest\\patient.json")));
+//        HashSet<String> givens = get_patient_name(pat,"given");
+//        for (String g:givens)
+//            System.out.println(g);
+//        
+//        System.out.println("---------------------------");
+//        givens = get_patient_name(pat,"family");
+//        for (String g:givens)
+//            System.out.println(g);
+        
+        
+        
+//        ExtensionDt ext = new ExtensionDt();
+//        ext.setModifier(false);
+//        ext.setUrl(":* ;+");
+//        //ext.setValue(new IdDt("123456789"));
+//        ext.setValue(new StringDt(":* ;+"));
+//        Patient p  = new Patient();
+//        UriDt u = new IdDt(":* ;+");
+//        
+//
+//        String pat = new String(Files.readAllBytes(Paths.get("C:\\Users\\borna.jafarpour\\Documents\\NetBeansProjects\\eConsult-FHIR\\eho-fhir-econsult\\src\\main\\java\\test\\dynamotest\\patient.json")));
+//        Patient p2  = DynamoDBConnection.fCtx.newJsonParser().parseResource(Patient.class,pat);                
+//        System.out.println("-------------->"  + p2.getId().getIdPart());
+//        System.out.println("name"+p2.getResourceName());
+//        ArrayList<String> ids = get_identifiers(pat);
+//        for (String s:ids)
+//            System.out.println(s);
+        
+//        JSONObject p= new JSONObject(pat);
+//        JSONArray ids = p.optJSONArray("identifier");
+//        
+//        if (ids!=null)
+//        {
+//            String[] idsarr = new String[ids.length()];
+//            for (int i = 0 ; i < ids.length() ; i++)
+//            {
+//                JSONObject identifier = ids.getJSONObject(i);
+//                String value = identifier.getString("value");
+//                String system = identifier.getString("system");
+//                System.out.println(system + "|" + value);
+//
+//            }
+//
+//        }
+        
+        
+        
+        
     /*    Patient p  = new Patient();
           ExtensionDt ext = new ExtensionDt();
         ext.setModifier(false);
@@ -120,6 +221,25 @@ public class FHIR_TEST {
         
         
     }
+    
+    private static ArrayList<String> get_identifiers(String patient){
+        JSONObject p= new JSONObject(patient);
+        JSONArray ids = p.optJSONArray("identifier");
+        ArrayList<String> idsarr = new ArrayList<>();
+        
+        if (ids!=null)
+        {
+            for (int i = 0 ; i < ids.length() ; i++)
+            {
+                JSONObject identifier = ids.getJSONObject(i);
+                String value = identifier.getString("value");
+                String system = identifier.getString("system");
+                idsarr.add(system + "|" + value);
+            }
+        }
+        return idsarr;
+    }    
+ 
 public static String prac1 = "{\n" +
 "  \"resourceType\": \"Practitioner\",\n" +
 "  \"id\": \"example\",\n" +
@@ -199,158 +319,4 @@ public static String prac1 = "{\n" +
 "  ]\n" +
 "}";
     
- public static String pat1 = "{\n" +
-"  \"resourceType\": \"Patient\",\n" +
-"  \"id\": \"example\",\n" +
-"  \"text\": {\n" +
-"    \"status\": \"generated\",\n" +
-"    \"div\": \"<div>\\n      \\n      <table>\\n        \\n        <tbody>\\n          \\n          <tr>\\n            \\n            <td>Name</td>\\n            \\n            <td>Peter James \\n              <b>Chalmers</b> (&quot;Jim&quot;)\\n            </td>\\n          \\n          </tr>\\n          \\n          <tr>\\n            \\n            <td>Address</td>\\n            \\n            <td>534 Erewhon, Pleasantville, Vic, 3999</td>\\n          \\n          </tr>\\n          \\n          <tr>\\n            \\n            <td>Contacts</td>\\n            \\n            <td>Home: unknown. Work: (03) 5555 6473</td>\\n          \\n          </tr>\\n          \\n          <tr>\\n            \\n            <td>Id</td>\\n            \\n            <td>MRN: 12345 (Acme Healthcare)</td>\\n          \\n          </tr>\\n        \\n        </tbody>\\n      \\n      </table>    \\n    \\n    </div>\"\n" +
-"  },\n" +
-"  \"identifier\": [\n" +
-"    {\n" +
-"      \"fhir_comments\": [\n" +
-"        \"   MRN assigned by ACME healthcare on 6-May 2001   \"\n" +
-"      ],\n" +
-"      \"use\": \"usual\",\n" +
-"      \"type\": {\n" +
-"        \"coding\": [\n" +
-"          {\n" +
-"            \"system\": \"http://hl7.org/fhir/v2/0203\",\n" +
-"            \"code\": \"MR\"\n" +
-"          }\n" +
-"        ]\n" +
-"      },\n" +
-"      \"system\": \"urn:oid:1.2.36.146.595.217.0.1\",\n" +
-"      \"value\": \"12345\",\n" +
-"      \"period\": {\n" +
-"        \"start\": \"2001-05-06\"\n" +
-"      },\n" +
-"      \"assigner\": {\n" +
-"        \"display\": \"Acme Healthcare\"\n" +
-"      }\n" +
-"    }\n" +
-"  ],\n" +
-"  \"active\": true,\n" +
-"  \"name\": [\n" +
-"    {\n" +
-"      \"fhir_comments\": [\n" +
-"        \"   Peter James Chalmers, but called \\\"Jim\\\"   \"\n" +
-"      ],\n" +
-"      \"use\": \"official\",\n" +
-"      \"family\": [\n" +
-"        \"Chalmers\"\n" +
-"      ],\n" +
-"      \"given\": [\n" +
-"        \"Peter\",\n" +
-"        \"James\"\n" +
-"      ]\n" +
-"    },\n" +
-"    {\n" +
-"      \"use\": \"usual\",\n" +
-"      \"given\": [\n" +
-"        \"Jim\"\n" +
-"      ]\n" +
-"    }\n" +
-"  ],\n" +
-"  \"telecom\": [\n" +
-"    {\n" +
-"      \"fhir_comments\": [\n" +
-"        \"   home communication details aren't known   \"\n" +
-"      ],\n" +
-"      \"use\": \"home\"\n" +
-"    },\n" +
-"    {\n" +
-"      \"system\": \"phone\",\n" +
-"      \"value\": \"(03) 5555 6473\",\n" +
-"      \"use\": \"work\"\n" +
-"    }\n" +
-"  ],\n" +
-"  \"gender\": \"male\",\n" +
-"  \"_gender\": {\n" +
-"    \"fhir_comments\": [\n" +
-"      \"   use FHIR code system for male / female   \"\n" +
-"    ]\n" +
-"  },\n" +
-"  \"birthDate\": \"1974-12-25\",\n" +
-"  \"_birthDate\": {\n" +
-"    \"extension\": [\n" +
-"      {\n" +
-"        \"url\": \"http://hl7.org/fhir/StructureDefinition/patient-birthTime\",\n" +
-"        \"valueDateTime\": \"1974-12-25T14:35:45-05:00\"\n" +
-"      }\n" +
-"    ]\n" +
-"  },\n" +
-"  \"deceasedBoolean\": false,\n" +
-"  \"address\": [\n" +
-"    {\n" +
-"      \"use\": \"home\",\n" +
-"      \"type\": \"both\",\n" +
-"      \"line\": [\n" +
-"        \"534 Erewhon St\"\n" +
-"      ],\n" +
-"      \"city\": \"PleasantVille\",\n" +
-"      \"district\": \"Rainbow\",\n" +
-"      \"state\": \"Vic\",\n" +
-"      \"postalCode\": \"3999\",\n" +
-"      \"period\": {\n" +
-"        \"start\": \"1974-12-25\"\n" +
-"      }\n" +
-"    }\n" +
-"  ],\n" +
-"  \"contact\": [\n" +
-"    {\n" +
-"      \"relationship\": [\n" +
-"        {\n" +
-"          \"coding\": [\n" +
-"            {\n" +
-"              \"system\": \"http://hl7.org/fhir/patient-contact-relationship\",\n" +
-"              \"code\": \"partner\"\n" +
-"            }\n" +
-"          ]\n" +
-"        }\n" +
-"      ],\n" +
-"      \"name\": {\n" +
-"        \"family\": [\n" +
-"          \"du\",\n" +
-"          \"Marché\"\n" +
-"        ],\n" +
-"        \"_family\": [\n" +
-"          {\n" +
-"            \"extension\": [\n" +
-"              {\n" +
-"                \"fhir_comments\": [\n" +
-"                  \"   the \\\"du\\\" part is a family name prefix (VV in iso 21090)   \"\n" +
-"                ],\n" +
-"                \"url\": \"http://hl7.org/fhir/StructureDefinition/iso21090-EN-qualifier\",\n" +
-"                \"valueCode\": \"VV\"\n" +
-"              }\n" +
-"            ]\n" +
-"          },\n" +
-"          null\n" +
-"        ],\n" +
-"        \"given\": [\n" +
-"          \"Bénédicte\"\n" +
-"        ]\n" +
-"      },\n" +
-"      \"telecom\": [\n" +
-"        {\n" +
-"          \"system\": \"phone\",\n" +
-"          \"value\": \"+33 (237) 998327\"\n" +
-"        }\n" +
-"      ],\n" +
-"      \"gender\": \"female\",\n" +
-"      \"period\": {\n" +
-"        \"start\": \"2012\",\n" +
-"        \"_start\": {\n" +
-"          \"fhir_comments\": [\n" +
-"            \"   The contact relationship started in 2012   \"\n" +
-"          ]\n" +
-"        }\n" +
-"      }\n" +
-"    }\n" +
-"  ],\n" +
-"  \"managingOrganization\": {\n" +
-"    \"reference\": \"Organization/1\"\n" +
-"  }\n" +
-"}";
 }
