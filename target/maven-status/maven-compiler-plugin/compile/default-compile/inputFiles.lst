@@ -1,8 +1,8 @@
-C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\dynamodb\Configuration.java
-C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\econsult\App.java
-C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\econsult\RestControllers\IHEpixmController.java
-C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\econsult\RestControllers\PatientController.java
-C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\resources\Ontario_Patient.java
+C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\test\dynamotest\Ph_schematron_test.java
+C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\pixm\RestControllers\PatientController.java
+C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\pixm\RestControllers\IHEpixmController.java
 C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\dynamodb\DynamoDBConnection.java
 C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\test\dynamotest\dynamotest.java
+C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\fhir\pixm\App.java
 C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\test\dynamotest\FHIR_TEST.java
+C:\Users\borna.jafarpour\Documents\NetBeansProjects\eConsult-FHIR\eho-fhir-econsult\src\main\java\com\eho\validation\PIXmValidator.java

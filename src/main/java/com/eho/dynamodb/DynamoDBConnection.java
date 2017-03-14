@@ -30,6 +30,7 @@ import com.amazonaws.services.dynamodbv2.model.ReturnValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.util.json.JSONObject;
+import com.eho.validation.PIXmValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,10 +60,10 @@ public class DynamoDBConnection {
     public static final boolean USE_PROXY = false;
     
     
+    
     private static final AmazonDynamoDBClient dynamoDBClient;
     public static String create_search_exp(String criteria_values,String criteria_name ,Map<String, AttributeValue> expressionAttributeValues)
     {
-        
         String filter_expression  = "";
         boolean previous_expression = false;
         if (!expressionAttributeValues.isEmpty())
@@ -259,41 +260,41 @@ public class DynamoDBConnection {
         ItemCollection<QueryOutcome> items = table.query(spec);
         return items;
     }
-    
-    public static ScanResult scan_dynamodb(Map<String,String> strings, Map<String, String> numbers)
-    {
-        Map<String, AttributeValue> expression_values = new HashMap<>();
-        Map<String, String> expression_names = new HashMap<>();
-        
-        
-        if (strings.keySet().contains("#jsondocument.#name[0].given[0]") | strings.keySet().contains("#jsondocument.#name[0].#family[0]"))
-            expression_names.put("#name","name"); 
-        
-        if (strings.keySet().contains("#jsondocument.#name[0].#family[0]"))
-            expression_names.put("#family","family"); 
-        
-        expression_names.put("#jsondocument", "json-document");
-
-        ScanRequest scanRequest = new ScanRequest()
-                .withTableName(DynamoDBConnection.PATIENT_TABLE);
-        
-        int i = 0 ;
-        String filter_expression = "";
-        for (String path : strings.keySet())
-        {
-            String thisVal = strings.get(path);
-            expression_values.put(":stringval"+i, new AttributeValue().withS(thisVal));
-            if (filter_expression.equals(""))
-                filter_expression += "(" + path + " = :stringval"+i++ +")";
-            else
-                filter_expression += " AND (" + path + " = :stringval"+i++ +")";
-        }
-         scanRequest.withExpressionAttributeNames(expression_names)
-                    .withExpressionAttributeValues(expression_values)
-                    .withFilterExpression(filter_expression);
-         System.out.println("Filter Expression ->" + filter_expression);
-        return dynamoDBClient.scan(scanRequest);
-    }
+//    
+//    public static ScanResult scan_dynamodb(Map<String,String> strings, Map<String, String> numbers)
+//    {
+//        Map<String, AttributeValue> expression_values = new HashMap<>();
+//        Map<String, String> expression_names = new HashMap<>();
+//        
+//        
+//        if (strings.keySet().contains("#jsondocument.#name[0].given[0]") | strings.keySet().contains("#jsondocument.#name[0].#family[0]"))
+//            expression_names.put("#name","name"); 
+//        
+//        if (strings.keySet().contains("#jsondocument.#name[0].#family[0]"))
+//            expression_names.put("#family","family"); 
+//        
+//        expression_names.put("#jsondocument", "json-document");
+//
+//        ScanRequest scanRequest = new ScanRequest()
+//                .withTableName(DynamoDBConnection.PATIENT_TABLE);
+//        
+//        int i = 0 ;
+//        String filter_expression = "";
+//        for (String path : strings.keySet())
+//        {
+//            String thisVal = strings.get(path);
+//            expression_values.put(":stringval"+i, new AttributeValue().withS(thisVal));
+//            if (filter_expression.equals(""))
+//                filter_expression += "(" + path + " = :stringval"+i++ +")";
+//            else
+//                filter_expression += " AND (" + path + " = :stringval"+i++ +")";
+//        }
+//         scanRequest.withExpressionAttributeNames(expression_names)
+//                    .withExpressionAttributeValues(expression_values)
+//                    .withFilterExpression(filter_expression);
+//         System.out.println("Filter Expression ->" + filter_expression);
+//        return dynamoDBClient.scan(scanRequest);
+//    }
 
     
     public static UpdateItemOutcome update_resource(String resource) throws Exception

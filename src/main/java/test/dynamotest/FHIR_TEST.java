@@ -45,7 +45,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import javax.json.JsonObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.CharSet;
 import org.hl7.fhir.instance.hapi.validation.FhirInstanceValidator;
@@ -82,7 +81,7 @@ public class FHIR_TEST {
     }    
     public static void main(String[] args) throws Exception
     {
-        String pat = new String(Files.readAllBytes(Paths.get("C:\\Users\\borna.jafarpour\\Documents\\NetBeansProjects\\eConsult-FHIR\\eho-fhir-econsult\\src\\main\\java\\test\\dynamotest\\patient.json")));
+        String pat = new String(Files.readAllBytes(Paths.get("C:\\Users\\borna.jafarpour\\Desktop\\pcr-full-ig\\Patient-pcr-patient-read-example.xml")));
         Patient newPatient = DynamoDBConnection.fCtx.newJsonParser().parseResource(Patient.class, pat);
         System.out.println(DynamoDBConnection.fCtx.newXmlParser().encodeResourceToString(newPatient));
 //

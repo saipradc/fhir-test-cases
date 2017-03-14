@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.eho.fhir.econsult.RestControllers;
+package com.eho.fhir.pixm.RestControllers;
 import ca.uhn.fhir.model.dstu2.resource.Bundle;
 import ca.uhn.fhir.model.dstu2.resource.OperationOutcome;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
@@ -16,6 +16,7 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.eho.dynamodb.DynamoDBConnection;
+import com.eho.validation.PIXmValidator;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -148,7 +149,8 @@ public class PatientController {
             is.setDiagnostics("A new resource created by the following id " + to_return);
             OperationOutcome oo = new OperationOutcome();
             oo.addIssue(is);
-
+            
+            PIXmValidator.validate_json(patient_resource_string, "Patient", oo);
             
             String is_string = DynamoDBConnection.fCtx.newJsonParser().setPrettyPrint(true).encodeResourceToString(oo);
             return new ResponseEntity(is_string,HttpStatus.OK);        
@@ -161,7 +163,6 @@ public class PatientController {
             is.setDiagnostics("An error occured: " + to_return);
             OperationOutcome oo = new OperationOutcome();
             oo.addIssue(is);            
-            
             return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().setPrettyPrint(true).encodeResourceToString(oo),HttpStatus.BAD_REQUEST);
         }
     }
@@ -185,7 +186,8 @@ public class PatientController {
             is.setSeverity(IssueSeverityEnum.INFORMATION);
             is.setDiagnostics("The following resource was sucessfully updated : " + id);
             OperationOutcome oo = new OperationOutcome();
-            oo.addIssue(is);            
+            oo.addIssue(is);   
+            PIXmValidator.validate_json(patient_resource_string, "Patient", oo);
             return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().setPrettyPrint(true).encodeResourceToString(oo),HttpStatus.OK);
 
         } catch (Exception e) {

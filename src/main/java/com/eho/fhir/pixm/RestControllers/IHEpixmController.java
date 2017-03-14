@@ -3,16 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.eho.fhir.econsult.RestControllers;
+package com.eho.fhir.pixm.RestControllers;
 
 import ca.uhn.fhir.model.api.ResourceMetadataKeyEnum;
 import ca.uhn.fhir.model.base.resource.ResourceMetadataMap;
 import ca.uhn.fhir.model.dstu2.composite.AgeDt;
 import ca.uhn.fhir.model.dstu2.composite.IdentifierDt;
 import ca.uhn.fhir.model.dstu2.resource.Bundle;
+import ca.uhn.fhir.model.dstu2.resource.OperationOutcome;
 import ca.uhn.fhir.model.dstu2.resource.Parameters;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.model.dstu2.valueset.BundleTypeEnum;
+import ca.uhn.fhir.model.dstu2.valueset.IssueSeverityEnum;
 import ca.uhn.fhir.model.primitive.BooleanDt;
 import ca.uhn.fhir.model.primitive.IdDt;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
@@ -20,10 +22,10 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.eho.dynamodb.DynamoDBConnection;
+import com.eho.validation.PIXmValidator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import javax.swing.text.html.HTMLDocument;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import sun.awt.image.ImageCache;
 
 /**
  *
@@ -56,13 +59,20 @@ public class IHEpixmController {
         try {
             JSONArray parameter = params.optJSONArray("parameter");
             if (parameter == null)
-                throw new Exception("No Parameter was provided");
+                throw new Exception("No parameter was provided");
             
             if (parameter.length() > 1)
                 throw new Exception("Too many paramaters");
             
             if (!"sourceIdentifier".equals(parameter.getJSONObject(0).optString("name")))
                 throw new Exception("incorrect parameter type. sourceIdentifier is expected");
+            
+            OperationOutcome oo = new OperationOutcome();
+            PIXmValidator.validate_json(parameters, "Parameters", oo);
+            if (oo.getIssue().size() > 0 )//if there are issues with the request
+            {
+                return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(oo),HttpStatus.BAD_REQUEST); 
+            }
             
             String system = parameter.optJSONObject(0).optJSONObject("valueIdentifier").optString("system");
             String value = parameter.optJSONObject(0).optJSONObject("valueIdentifier").optString("value");
@@ -107,7 +117,8 @@ public class IHEpixmController {
             }        
             return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(pm),HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+            OperationOutcome oo = new OperationOutcome().addIssue(new OperationOutcome.Issue().setSeverity(IssueSeverityEnum.ERROR).setDiagnostics(e.getMessage()));
+            return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(oo),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }    
     
