@@ -45,12 +45,12 @@ import sun.awt.image.ImageCache;
 @RestController
 @RequestMapping(value="/Patient/$ihe-pix")
 public class IHEpixmController {
-    
-    @RequestMapping(method=RequestMethod.GET, produces = "application/json;charset=UTF-8")
-    public ResponseEntity<String> patient_search(@RequestParam(required = false) String given, @RequestParam(required = false) String family, @RequestParam(required = false) String identifier) throws Exception
-    {    
-        return new ResponseEntity("test ihe-pixm goooz",HttpStatus.OK);
-    }
+//    
+//    @RequestMapping(method=RequestMethod.GET, produces = "application/json;charset=UTF-8")
+//    public ResponseEntity<String> patient_search(@RequestParam(required = false) String given, @RequestParam(required = false) String family, @RequestParam(required = false) String identifier) throws Exception
+//    {    
+//        return new ResponseEntity("test ihe-pixm goooz",HttpStatus.OK);
+//    }
     
     @RequestMapping(method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
     public @ResponseBody ResponseEntity<String> ihe_pixm_post( @RequestBody final  String parameters) throws Exception{ 
@@ -65,16 +65,10 @@ public class IHEpixmController {
                 throw new Exception("Too many paramaters");
             
             if (!"sourceIdentifier".equals(parameter.getJSONObject(0).optString("name")))
-                throw new Exception("incorrect parameter type. sourceIdentifier is expected");
+                throw new Exception("Incorrect parameter type. SourceIdentifier is expected");
+
             
-            OperationOutcome oo = new OperationOutcome();
-            PIXmValidator.validate_json(parameters, "Parameters", oo);
-            if (oo.getIssue().size() > 0 )//if there are issues with the request
-            {
-                return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(oo),HttpStatus.BAD_REQUEST); 
-            }
-            
-            String system = parameter.optJSONObject(0).optJSONObject("valueIdentifier").optString("system");
+            String system = parameter.optJSONObject(0).optJSONObject("valueIdentifier").optString("system").toLowerCase();
             String value = parameter.optJSONObject(0).optJSONObject("valueIdentifier").optString("value");
             
             Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
@@ -115,10 +109,11 @@ public class IHEpixmController {
                     }
                 }
             }        
-            return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(pm),HttpStatus.OK);
+            return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().setPrettyPrint(true).encodeResourceToString(pm),HttpStatus.OK);
         } catch (Exception e) {
             OperationOutcome oo = new OperationOutcome().addIssue(new OperationOutcome.Issue().setSeverity(IssueSeverityEnum.ERROR).setDiagnostics(e.getMessage()));
-            return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().encodeResourceToString(oo),HttpStatus.INTERNAL_SERVER_ERROR);
+            PIXmValidator.validate_json(parameters, "Parameters", oo);
+            return new ResponseEntity(DynamoDBConnection.fCtx.newJsonParser().setPrettyPrint(true).encodeResourceToString(oo),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }    
     

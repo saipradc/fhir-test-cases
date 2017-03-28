@@ -116,7 +116,7 @@ public class PatientController {
             else
             {
                 Patient p = DynamoDBConnection.fCtx.newJsonParser().parseResource(Patient.class, last_version.toString());
-                return new ResponseEntity(DynamoDBConnection.fCtx.newXmlParser().encodeResourceToString(p),HttpStatus.OK);
+                return new ResponseEntity(DynamoDBConnection.fCtx.newXmlParser().setPrettyPrint(true).encodeResourceToString(p),HttpStatus.OK);
             }
             
         } catch (Exception e) {

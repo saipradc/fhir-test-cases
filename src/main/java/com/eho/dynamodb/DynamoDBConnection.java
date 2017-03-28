@@ -57,9 +57,7 @@ public class DynamoDBConnection {
 
     public static final String PROXY_IP = "10.61.128.178"; //former proxy. not used
     public static final int PROXY_PORT = 8080;
-    public static final boolean USE_PROXY = false;
-    
-    
+    public static final boolean USE_PROXY = false;   
     
     private static final AmazonDynamoDBClient dynamoDBClient;
     public static String create_search_exp(String criteria_values,String criteria_name ,Map<String, AttributeValue> expressionAttributeValues)
@@ -176,6 +174,7 @@ public class DynamoDBConnection {
     {
         String primary_key = generate_uuid();
         resource.setId(primary_key);
+        upload_resource(resource,primary_key);
         return primary_key;
     }
     public static void upload_resource( BaseResource  resource, String id /* if no primary key in case of post, send null*/ ) throws Exception
@@ -246,7 +245,7 @@ public class DynamoDBConnection {
                 org.json.JSONObject identifier = ids.getJSONObject(i);
                 String value = identifier.optString("value");
                 String system = identifier.optString("system");
-                idsarr.add(system + "|" + value);
+                idsarr.add(system.toLowerCase() + "|" + value);
             }
         }
         return idsarr;
