@@ -8,17 +8,27 @@ package test.dynamotest;
 import ca.uhn.fhir.model.dstu2.resource.Patient;
 import ca.uhn.fhir.parser.IParser;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
+import com.amazonaws.services.dynamodbv2.document.Table;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
+import com.amazonaws.services.dynamodbv2.util.TableUtils;
 
-import com.amazonaws.util.json.JSONObject;
+
 import com.eho.dynamodb.DynamoDBConnection;
+import static com.eho.dynamodb.DynamoDBConnection.PATIENT_TABLE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +44,7 @@ import java.util.Scanner;
  * @author borna.jafarpour
  */
 public class dynamotest {
-    public static void main(String[] args) throws Exception
+    public static void main(String[] args) 
     {
          /*String file="patient-test.json";
          JSONObject patient =   new JSONObject(readFile(file));
@@ -56,7 +66,25 @@ public class dynamotest {
         System.out.println(i.toJSONPretty());*/
         
         //test_dynamo_db_search();
-        test_dynamo_db_query2();
+        //test_dynamo_db_query2();
+//        AmazonDynamoDB dynamoDBClient = DynamoDBConnection.getDynamoDBClient();
+//        DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
+//        Table table = dynamoDB.getTable("gooooz10");
+//        
+//        
+//        System.out.println("TABLEEEE ->" + table);
+        
+            AmazonDynamoDB client = DynamoDBConnection.getDynamoDBClient();
+            System.out.println("Creating table");            
+            client.setEndpoint("http://localhost:8000"); 
+
+            CreateTableRequest ctr = new CreateTableRequest()
+                    .withTableName("angoozpiss")
+                    .withProvisionedThroughput(new ProvisionedThroughput(new Long(10), new Long(10)))
+                    .withKeySchema(new KeySchemaElement().withAttributeName("dynamodb-id").withKeyType(KeyType.HASH))
+                     .withAttributeDefinitions(new AttributeDefinition().withAttributeName("dynamodb-id").withAttributeType(ScalarAttributeType.S));
+            TableUtils.createTableIfNotExists(client, ctr);
+        
     }
     
     public static void test_dynamo_db_query2()

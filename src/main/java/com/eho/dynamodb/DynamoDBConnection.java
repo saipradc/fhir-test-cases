@@ -27,22 +27,33 @@ import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
 import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ReturnValue;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import com.amazonaws.util.json.JSONObject;
-import com.eho.validation.PIXmValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
-import org.hl7.fhir.instance.validation.InstanceValidator;
 import org.json.JSONArray;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.util.TableUtils;
+
+
+
+import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Item;
+import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
+import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
+import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
+import com.amazonaws.services.dynamodbv2.model.KeyType;
+import com.amazonaws.services.dynamodbv2.model.LocalSecondaryIndex;
+import com.amazonaws.services.dynamodbv2.model.Projection;
+import com.amazonaws.services.dynamodbv2.model.ProjectionType;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.ScalarAttributeType;
+
 
 /**
  *
@@ -58,6 +69,8 @@ public class DynamoDBConnection {
     public static final String PROXY_IP = "10.61.128.178"; //former proxy. not used
     public static final int PROXY_PORT = 8080;
     public static final boolean USE_PROXY = false;   
+    public static final boolean LOCAL_DYNAMO_DB = true;   
+    
     
     private static final AmazonDynamoDBClient dynamoDBClient;
     public static String create_search_exp(String criteria_values,String criteria_name ,Map<String, AttributeValue> expressionAttributeValues)
@@ -99,7 +112,21 @@ public class DynamoDBConnection {
             cc.setProxyHost(DynamoDBConnection.PROXY_IP);
             cc.setProxyPort(DynamoDBConnection.PROXY_PORT);
         }
+        
         dynamoDBClient = new AmazonDynamoDBClient(cc);
+        
+        if (LOCAL_DYNAMO_DB)//we will try to crea the table needed for this task
+        {
+            dynamoDBClient.setEndpoint("http://localhost:8000"); 
+            CreateTableRequest ctr = new CreateTableRequest()
+                    .withTableName("eConsult")
+                    .withProvisionedThroughput(new ProvisionedThroughput(new Long(10), new Long(10)))
+                    .withKeySchema(new KeySchemaElement().withAttributeName("dynamodb-id").withKeyType(KeyType.HASH))
+                     .withAttributeDefinitions(new AttributeDefinition().withAttributeName("dynamodb-id").withAttributeType(ScalarAttributeType.S));
+            TableUtils.createTableIfNotExists(dynamoDBClient, ctr);            
+        }
+
+
     }
     public static AmazonDynamoDBClient getDynamoDBClient()
     {
@@ -113,61 +140,11 @@ public class DynamoDBConnection {
         Item retreived_item = table.getItem(PRIMARY_KEY,id);
         return retreived_item;
     }
-    public static PutItemOutcome upload_resource_old(String resource) throws Exception
-    {
-        String id ;
-        JSONObject json_resource = new JSONObject(resource);
-        //does the resource have a primary key?
-        if (json_resource.has(PRIMARY_KEY))//if it does not have a primary key, create one using uuid
-            id = json_resource.getString(PRIMARY_KEY);
-        else
-            id = UUID.randomUUID().toString();
-        
-        DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
-        Table table = dynamoDB.getTable(PATIENT_TABLE);
-        
-        //lets retreive based on the key. if key invalid (not assigned yet) nullis returned.
-        Item retreived_item = table.getItem(PRIMARY_KEY,id);
-        if (retreived_item == null)//if null instantiate it
-        {
-            retreived_item = new Item();
-            retreived_item.withPrimaryKey(PRIMARY_KEY, id);
-        }
-        
-        Integer new_version = retreived_item.getInt("version") + 1;
-        retreived_item.withInt("version", new_version);
-        
-        Item item_to_upload = Item.fromJSON(retreived_item.toJSONPretty()).withJSON("Document", resource);
-        PutItemSpec putItemSpec = new PutItemSpec()
-                .withItem(item_to_upload)
-                .withReturnValues(ReturnValue.NONE);
-        return table.putItem(putItemSpec);
-    }
+   
     private static String generate_uuid()
     {
         return UUID.randomUUID().toString();
     }
-//    private static String add_uuid(BaseResource resource)//returns existing primary key is it already exists
-//    {
-//        return add_primary_as_extension( UUID.randomUUID().toString());
-//    }
-//    private static String add_primary_as_extension(String uuid)//returns existing primary key is it already exists
-//    {
-//        ExtensionDt ext = new ExtensionDt();
-//        ext.setModifier(false);
-//        ext.setUrl(DynamoDBConnection.PRIMARY_KEY_URL);
-//        ext.setValue(new StringDt(uuid));
-//        //resource.addUndeclaredExtension(ext);            
-//        return uuid;
-//    }
-//    private static void add_string_as_extension(BaseResource resource, String text)//returns existing primary key is it already exists
-//    {
-//        ExtensionDt ext = new ExtensionDt();
-//        ext.setModifier(false);
-//        ext.setUrl(JSON_TEXT_URL);
-//        ext.setValue(new IdDt(text));
-//        resource.addUndeclaredExtension(ext);            
-//    }
 
     
     public static String upload_resource( BaseResource  resource ) throws Exception
@@ -236,7 +213,7 @@ public class DynamoDBConnection {
     public static HashSet<String> get_patient_identifiers(String patient){
         org.json.JSONObject p= new org.json.JSONObject(patient);
         JSONArray ids = p.optJSONArray("identifier");
-        HashSet<String> idsarr = new HashSet<String>();
+        HashSet<String> idsarr = new HashSet<>();
         
         if (ids!=null)
         {
@@ -259,110 +236,42 @@ public class DynamoDBConnection {
         ItemCollection<QueryOutcome> items = table.query(spec);
         return items;
     }
-//    
-//    public static ScanResult scan_dynamodb(Map<String,String> strings, Map<String, String> numbers)
-//    {
-//        Map<String, AttributeValue> expression_values = new HashMap<>();
-//        Map<String, String> expression_names = new HashMap<>();
-//        
-//        
-//        if (strings.keySet().contains("#jsondocument.#name[0].given[0]") | strings.keySet().contains("#jsondocument.#name[0].#family[0]"))
-//            expression_names.put("#name","name"); 
-//        
-//        if (strings.keySet().contains("#jsondocument.#name[0].#family[0]"))
-//            expression_names.put("#family","family"); 
-//        
-//        expression_names.put("#jsondocument", "json-document");
-//
-//        ScanRequest scanRequest = new ScanRequest()
-//                .withTableName(DynamoDBConnection.PATIENT_TABLE);
-//        
-//        int i = 0 ;
-//        String filter_expression = "";
-//        for (String path : strings.keySet())
-//        {
-//            String thisVal = strings.get(path);
-//            expression_values.put(":stringval"+i, new AttributeValue().withS(thisVal));
-//            if (filter_expression.equals(""))
-//                filter_expression += "(" + path + " = :stringval"+i++ +")";
-//            else
-//                filter_expression += " AND (" + path + " = :stringval"+i++ +")";
-//        }
-//         scanRequest.withExpressionAttributeNames(expression_names)
-//                    .withExpressionAttributeValues(expression_values)
-//                    .withFilterExpression(filter_expression);
-//         System.out.println("Filter Expression ->" + filter_expression);
-//        return dynamoDBClient.scan(scanRequest);
-//    }
 
     
-    public static UpdateItemOutcome update_resource(String resource) throws Exception
-    {
-        String id ;
-        JSONObject json_resource = new JSONObject(resource);
-        //does the resource have a primary key?
-        if (json_resource.has(PRIMARY_KEY))//if it does not have a primary key, create one using uuid
-            id = json_resource.getString(PRIMARY_KEY);
-        else
-            id = UUID.randomUUID().toString();
-        
-        DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
-        Table table = dynamoDB.getTable(PATIENT_TABLE);
-        
-        //lets retreive based on the key. if key invalid (not assigned yet) nullis returned.
-        Item retreived_item = table.getItem(PRIMARY_KEY,id);
-        if (retreived_item == null)//if null instantiate it
-        {
-            retreived_item = new Item();
-            retreived_item.withPrimaryKey(PRIMARY_KEY, id);
-        }
-        
-        Integer new_version = retreived_item.getInt("version") + 1;        
-        retreived_item.withInt("version", new_version);
-        String new_version_str= new_version.toString();
-        
-        UpdateItemSpec updateItemSpec = new UpdateItemSpec()
-                .withPrimaryKey(PRIMARY_KEY,id)
-                .withUpdateExpression("SET " + new_version_str+ "= :newval")
-            .withValueMap(new ValueMap()
-                .withString(":newval", resource))
-            .withReturnValues(ReturnValue.ALL_NEW);
-        
-        return table.updateItem(updateItemSpec);
-    }
-    
-
-//    private static int create_new_version_numbe_old(Item item) throws Exception
+//    public static UpdateItemOutcome update_resource(String resource) throws Exception
 //    {
-//        JSONObject json_resource = new JSONObject(item.toJSONPretty());
-//        Iterator<String> itr= json_resource.keys();
-//        int max_version = Integer.MIN_VALUE;
-//        while (itr.hasNext())
+//        String id ;
+//        JSONObject json_resource = new JSONObject(resource);
+//        //does the resource have a primary key?
+//        if (json_resource.has(PRIMARY_KEY))//if it does not have a primary key, create one using uuid
+//            id = json_resource.getString(PRIMARY_KEY);
+//        else
+//            id = UUID.randomUUID().toString();
+//        
+//        DynamoDB dynamoDB = new DynamoDB(dynamoDBClient);
+//        Table table = dynamoDB.getTable(PATIENT_TABLE);
+//        
+//        //lets retreive based on the key. if key invalid (not assigned yet) nullis returned.
+//        Item retreived_item = table.getItem(PRIMARY_KEY,id);
+//        if (retreived_item == null)//if null instantiate it
 //        {
-//            String nextString = itr.next();
-//            
-//            if (nextString.matches("[0-9]+"))//if a ltter does not exist in the key.this means it is a version of the rseource
-//            {
-//                int thisValue = Integer.valueOf(nextString);
-//                if (thisValue > max_version)
-//                    max_version= thisValue;
-//            }
+//            retreived_item = new Item();
+//            retreived_item.withPrimaryKey(PRIMARY_KEY, id);
 //        }
 //        
-//        if (max_version == Integer.MIN_VALUE)
-//            return 0;
-//        else
-//            return ++max_version;
-//    }    
-//    public static String get_extension(BaseResource br, String url)
-//    {
-//        List<ExtensionDt> resourceExts = br.getUndeclaredExtensionsByUrl(url);
-//        if (!resourceExts.isEmpty())
-//            return resourceExts.get(0).getValue().toString();
-//        else
-//            return null;
+//        Integer new_version = retreived_item.getInt("version") + 1;        
+//        retreived_item.withInt("version", new_version);
+//        String new_version_str= new_version.toString();
+//        
+//        UpdateItemSpec updateItemSpec = new UpdateItemSpec()
+//                .withPrimaryKey(PRIMARY_KEY,id)
+//                .withUpdateExpression("SET " + new_version_str+ "= :newval")
+//            .withValueMap(new ValueMap()
+//                .withString(":newval", resource))
+//            .withReturnValues(ReturnValue.ALL_NEW);
+//        
+//        return table.updateItem(updateItemSpec);
 //    }
-    
-    
+   
     
 }
